@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__ide__getDiagnostics",
+      "Bash(mvn --version)",
+      "Bash(SERVER=\"/C/Users/tt7817i/.vscode/extensions/vscjava.vscode-java-test-0.44.0/server\")",
+      "Bash(cp \"$SERVER/junit-jupiter-api_5.14.1.jar\" \"$SERVER/junit-jupiter-engine_5.14.1.jar\" \"$SERVER/junit-platform-commons_1.14.1.jar\" \"$SERVER/junit-platform-engine_1.14.1.jar\" \"$SERVER/junit-platform-launcher_1.14.1.jar\" lib/)",
+      "Bash(JUNIT=\"lib/junit-jupiter-api_5.14.1.jar:lib/junit-platform-commons_1.14.1.jar\")",
+      "Bash(javac --module-path \"out:$JUNIT\" --add-modules org.junit.jupiter.api -cp \"out\" -d out coursework/ChatServerTest.java)",
+      "Bash(JLIB=\"lib/junit-jupiter-api_5.14.1.jar:lib/junit-platform-commons_1.14.1.jar\")",
+      "Bash(javac --module-path \"out:lib\" --add-modules org.junit.jupiter.api -d out coursework/ChatServerTest.java)",
+      "Bash(jar tf:*)",
+      "Bash(javac:*)",
+      "Bash(java -jar lib/junit-jupiter-api_5.14.1.jar)",
+      "Bash(java --module-path lib/junit-jupiter-api_5.14.1.jar --describe-module org.junit.jupiter.api)",
+      "Bash(java --module-path \"out;lib/junit-jupiter-api_5.14.1.jar;lib/junit-jupiter-engine_5.14.1.jar;lib/junit-platform-commons_1.14.1.jar;lib/junit-platform-engine_1.14.1.jar;lib/junit-platform-launcher_1.14.1.jar\" --add-reads coursework=org.junit.jupiter.api --add-opens coursework/coursework=org.junit.jupiter.engine -m org.junit.platform.launcher/org.junit.platform.launcher.Launcher)",
+      "Bash(find /C/Users/tt7817i/.vscode -name opentest4j*.jar)",
+      "Bash(find /C/Users/tt7817i -name *.jar)",
+      "Bash(xargs -I{} basename {})"
+    ]
+  }
+}
