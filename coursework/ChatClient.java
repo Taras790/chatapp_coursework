@@ -69,8 +69,7 @@ public class ChatClient {
     }
 
     private void run() throws IOException {
-        try {
-            Socket socket = new Socket(serverAddress, 50000);
+        try (Socket socket = new Socket(serverAddress, 50000)) {
             in = new Scanner(socket.getInputStream());
             out = new PrintWriter(socket.getOutputStream(), true);
 
