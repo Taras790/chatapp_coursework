@@ -43,15 +43,18 @@ chatapp_coursework/
 
 ### Step 1 — Compile
 
-```bash
-javac -d out module-info.java coursework/*.java
+```powershell
+$sources = Get-ChildItem coursework\*.java | Where-Object { $_.Name -ne "ChatServerTest.java" } | ForEach-Object { $_.FullName }
+javac -d out module-info.java $sources
 ```
 
-This compiles everything into the `out/` folder. Run this once, or again whenever you change any `.java` file.
+This compiles the application sources into the `out/` folder (excluding `ChatServerTest.java`). Run this once, or again whenever you change any app `.java` file.
 
-> To exclude the test file (no JUnit needed):
-> ```bash
-> javac -d out module-info.java $(ls coursework/*.java | grep -v ChatServerTest.java)
+> If `java` / `javac` is not recognized in your terminal, run once per terminal session:
+> ```powershell
+> $jdk = Get-ChildItem "C:\Program Files\Eclipse Adoptium" -Directory | Sort-Object Name -Descending | Select-Object -First 1
+> $env:JAVA_HOME = $jdk.FullName
+> $env:Path = "$env:JAVA_HOME\bin;$env:Path"
 > ```
 
 ---
@@ -60,8 +63,8 @@ This compiles everything into the `out/` folder. Run this once, or again wheneve
 
 Open a terminal and run:
 
-```bash
-java --module-path out -m coursework/coursework.ChatServer
+```powershell
+& "C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot\bin\java.exe" --module-path out -m coursework/coursework.ChatServer
 ```
 
 **You must keep this terminal open.** The server does not stop unless you close it or press `Ctrl+C`.
@@ -77,20 +80,20 @@ Chat server running on port 50000 ...
 
 Open a **new terminal** (leave the server running) and run:
 
-```bash
-java --module-path out -m coursework/coursework.ChatClient localhost
+```powershell
+& "C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot\bin\java.exe" --module-path out -m coursework/coursework.ChatClient localhost
 ```
 
 A GUI window will appear. Enter your unique ID when prompted.
 
 > To connect from a **different machine**, replace `localhost` with the server's IP address:
-> ```bash
-> java --module-path out -m coursework/coursework.ChatClient 192.168.1.10
+> ```powershell
+> & "C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot\bin\java.exe" --module-path out -m coursework/coursework.ChatClient 192.168.1.10
 > ```
 
 > To connect on a **custom port**:
-> ```bash
-> java --module-path out -m coursework/coursework.ChatClient localhost 50001
+> ```powershell
+> & "C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot\bin\java.exe" --module-path out -m coursework/coursework.ChatClient localhost 50001
 > ```
 
 ---
