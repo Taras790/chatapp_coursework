@@ -9,15 +9,15 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * Multithreaded chat room server supporting coordinator election,
- * periodic pings, private messaging, member lists, and fault tolerance.
+ * multithreaded chat room server supporting coordinator election,
+ * periodic pings, private messaging, member lists, and fault tolerance
  *
- * Implements {@link GroupEventListener} (Observer pattern) to react to
- * membership changes and broadcast the appropriate protocol messages.
+ * implements {@link GroupEventListener} (Observer pattern) to react to
+ * membership changes and broadcast the appropriate protocol messages
  *
- * Uses {@link ServerState} (Singleton) for shared state and
+ * uses {@link ServerState} (Singleton) for shared state and
  * {@link CommandFactory} + {@link ChatCommand} (Command pattern)
- * to dispatch client messages without a long if-else chain.
+ * to dispatch client messages without a long if-else chain
  */
 public class ChatServer implements GroupEventListener {
 
@@ -25,6 +25,7 @@ public class ChatServer implements GroupEventListener {
     private final MessageLogger logger;
     private final PingScheduler pinger;
 
+    // constructor initialises shared state, logger, pinger, and registers as listener for group events
     public ChatServer() {
         this.state  = ServerState.getInstance();
         this.logger = MessageLogger.getInstance();
@@ -32,6 +33,7 @@ public class ChatServer implements GroupEventListener {
         state.addListener(this);
     }
 
+    // starts the server on the given port, accepting clients in a loop
     public void start(int port) throws IOException {
         pinger.start();
         ExecutorService pool = Executors.newFixedThreadPool(500);
@@ -43,10 +45,8 @@ public class ChatServer implements GroupEventListener {
         }
     }
 
-    // -------------------------------------------------------------------------
-    // GroupEventListener — Observer callbacks fired by ServerState
-    // -------------------------------------------------------------------------
 
+    // groupEventListener — observer callbacks fired by ServerState
     @Override
     public void onMemberJoined(ClientInfo member) {
         String msg = Protocol.MEMBER_JOINED + " " + member.getId()
@@ -56,12 +56,15 @@ public class ChatServer implements GroupEventListener {
                 + member.getIpAddress() + ":" + member.getPort() + ")");
     }
 
+    // member left event: broadcast MEMBER_LEFT clientId to all remaining clients
     @Override
     public void onMemberLeft(String memberId) {
         state.broadcast(Protocol.MEMBER_LEFT + " " + memberId);
         System.out.println("[Server] " + memberId + " left");
     }
 
+    // coordinator changed event: broadcast COORDINATOR_CHANGED newCoordId to all clients,
+    // and send COORDINATOR_YOU to the new coordinator
     @Override
     public void onCoordinatorChanged(String newCoordinatorId) {
         state.broadcast(Protocol.COORDINATOR_CHANGED + " " + newCoordinatorId);
@@ -69,10 +72,7 @@ public class ChatServer implements GroupEventListener {
         System.out.println("[Server] New coordinator: " + newCoordinatorId);
     }
 
-    // -------------------------------------------------------------------------
-    // Entry point
-    // -------------------------------------------------------------------------
-
+    // entry point and main loop
     public static void main(String[] args) throws Exception {
         int port = Protocol.DEFAULT_PORT;
         if (args.length > 0) {
@@ -82,14 +82,12 @@ public class ChatServer implements GroupEventListener {
         new ChatServer().start(port);
     }
 
-    // =========================================================================
-    // Inner class: Handler
-    // =========================================================================
+    // inner class: Handler
 
     /**
-     * Handles one connected client on its own thread.
-     * Negotiates the client ID, informs about the coordinator,
-     * then drives the Command-pattern dispatch loop.
+     * this is handles one connected client on its own thread.
+     * negotiates the client ID, informs about the coordinator,
+     * then drives the Command-pattern dispatch loop
      */
     static class Handler implements Runnable {
 
@@ -106,7 +104,7 @@ public class ChatServer implements GroupEventListener {
             this.state  = state;
             this.logger = logger;
         }
-
+        // main loop for this client connection: negotiate ID, inform about coordinator, then dispatch commands
         @Override
         public void run() {
             try {
@@ -136,7 +134,7 @@ public class ChatServer implements GroupEventListener {
                     out.println(Protocol.NAME_TAKEN);
                 }
 
-                // --- Phase 2: Confirm and inform about coordinator ---
+                // the next phase (2) confirm and inform about coordinator
                 out.println(Protocol.NAMEACCEPTED + " " + clientId);
                 if (state.isCoordinator(clientId)) {
                     out.println(Protocol.COORDINATOR_YOU);
@@ -147,7 +145,7 @@ public class ChatServer implements GroupEventListener {
                 logger.log(new MessageRecord(clientId, null,
                         clientId + " joined the group", MessageRecord.Type.SYSTEM));
 
-                // --- Phase 3: Command dispatch loop ---
+                // lastly phase (3) command dispatch loop
                 while (in.hasNextLine()) {
                     String     line = in.nextLine();
                     ChatCommand cmd  = CommandFactory.parse(line);
@@ -162,6 +160,7 @@ public class ChatServer implements GroupEventListener {
             }
         }
 
+        // helper method to clean up on client disconnect: deregister from state, log the event, and close the socket
         private void cleanup() {
             if (clientId != null) {
                 logger.log(new MessageRecord(clientId, null,

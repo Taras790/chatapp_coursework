@@ -7,10 +7,10 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 /**
- * Singleton thread-safe append-only log of all messages.
- * Satisfies the "group state maintenance with timestamps" requirement.
+ * singleton thread-safe append-only log of all messages 
+ * satisfies the "group state maintenance with timestamps" requirement and provides a centralised place to store message history for potential future features (e.g. message retrieval, analytics)
  *
- * Design pattern: Singleton (double-checked locking with volatile).
+ * design pattern: Singleton (double-checked locking with volatile)
  */
 public class MessageLogger {
 
@@ -30,26 +30,26 @@ public class MessageLogger {
         }
         return instance;
     }
-
+    // note: MessageRecord is immutable, so we can safely store and return references without defensive copying
     public void log(MessageRecord record) {
         records.add(record);
     }
-
+    // returns an unmodifiable snapshot of all message records, ordered by timestamp (oldest first)
     public List<MessageRecord> getAll() {
         return Collections.unmodifiableList(new ArrayList<>(records));
     }
-
+    // returns an unmodifiable list of message records sent by the specified client, ordered by timestamp (oldest first)
     public List<MessageRecord> getBySender(String senderId) {
         return records.stream()
             .filter(r -> senderId.equals(r.getSenderId()))
             .collect(Collectors.toList());
     }
-
+    // returns an unmodifiable list of message records received by the specified client, ordered by timestamp (oldest first)
     public int size() {
         return records.size();
     }
 
-    /** Used by tests only to reset state between test runs. */
+    /** used by tests only to reset state between test runs */
     public void clear() {
         records.clear();
     }

@@ -1,8 +1,8 @@
 package coursework;
 
 /**
- * Sends the full member list (IDs, IPs, ports, coordinator flag) to the requesting client.
- * Design pattern: Command (concrete command).
+ * sends the full member list (IDs, IPs, ports, coordinator flag) to the requesting client
+ * design pattern: Command (concrete command)
  */
 public class ListMembersCommand implements ChatCommand {
 

@@ -6,10 +6,10 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Sends a PING to every connected client every 20 seconds.
- * Clients that do not reply with PONG within 5 seconds are considered
+ * sends a PING to every connected client every 20 seconds
+ * clients that do not reply with PONG within 5 seconds are considered
  * unresponsive and removed — fulfilling the fault-tolerance requirement
- * for abnormal disconnects.
+ * for abnormal disconnects
  */
 public class PingScheduler {
 
@@ -22,7 +22,7 @@ public class PingScheduler {
     }
 
     public void start() {
-        // Send PING to all clients every 20 seconds
+        // send PING to all clients every 20 seconds
         scheduler.scheduleAtFixedRate(
             this::sendPings,
             Protocol.PING_INTERVAL_SEC,
@@ -39,10 +39,12 @@ public class PingScheduler {
         );
     }
 
+    // stops the scheduler and cancels all pending tasks
     public void stop() {
         scheduler.shutdownNow();
     }
 
+    // sends a PING to every connected client and marks the time of sending
     private void sendPings() {
         if (state.size() == 0) return;
         state.markPingSent();
@@ -50,6 +52,7 @@ public class PingScheduler {
         System.out.println("[PingScheduler] PING sent to " + state.size() + " member(s)");
     }
 
+    // checks for clients that have not responded to the last PING and removes them
     private void checkResponses() {
         List<String> unresponsive = state.getUnresponsiveClients();
         for (String id : unresponsive) {

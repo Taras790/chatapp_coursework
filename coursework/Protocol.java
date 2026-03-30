@@ -1,14 +1,14 @@
 package coursework;
 
 /**
- * Central repository for all protocol string constants and configuration.
- * Eliminates magic strings across the codebase.
+ * central repository for all protocol string constants and configuration
+ * eliminates magic strings across the codebase and provides a single source of truth for command formats and config values.
  */
 public final class Protocol {
 
     private Protocol() {}
 
-    // Server -> Client
+    // server -> client commands
     public static final String SUBMITNAME          = "SUBMITNAME";
     public static final String NAME_TAKEN          = "NAME_TAKEN";
     public static final String NAMEACCEPTED        = "NAMEACCEPTED";
@@ -24,14 +24,14 @@ public final class Protocol {
     public static final String PING                = "PING";
     public static final String ERROR               = "ERROR";
 
-    // Client -> Server
+    // client -> server commands
     public static final String PONG      = "PONG";
     public static final String BROADCAST = "BROADCAST";
     public static final String PRIVMSG   = "PRIVMSG";
     public static final String LIST      = "LIST";
     public static final String QUIT      = "QUIT";
 
-    // Config
+    // config constants
     public static final int  DEFAULT_PORT      = 50000;
     public static final long PING_INTERVAL_SEC = 20L;
     public static final long PONG_TIMEOUT_SEC  = 5L;

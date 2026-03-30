@@ -1,8 +1,8 @@
 package coursework;
 
 /**
- * Sends a private message to a specific member.
- * Design pattern: Command (concrete command).
+ * sends a private message to a specific member
+ * design pattern: Command (concrete command)
  */
 public class PrivateMessageCommand implements ChatCommand {
 
@@ -14,6 +14,7 @@ public class PrivateMessageCommand implements ChatCommand {
         this.text     = text;
     }
 
+    // executes the command: checks if target exists, logs the message, and sends to both sender and target
     @Override
     public void execute(String clientId, ServerState state, MessageLogger logger) {
         if (!state.hasClient(targetId)) {

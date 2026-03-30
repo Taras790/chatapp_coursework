@@ -14,7 +14,7 @@ import java.io.StringWriter;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * JUnit 5 tests covering the core requirements of Task 1:
+ * JUnit 5 tests covering the core requirements of chosen task (1):
  * group formation, coordinator election, fault tolerance, and messaging.
  */
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -37,22 +37,16 @@ class ChatServerTest {
         logger.clear();
     }
 
-    // -------------------------------------------------------------------------
-    // Helper
-    // -------------------------------------------------------------------------
-
+    // helper method to create a dummy PrintWriter for testing registration without actual sockets
     private PrintWriter dummyWriter() {
         return new PrintWriter(new StringWriter(), true);
     }
-
+    // helper method to add a member with a given ID, returns true if successful, false if ID is duplicate
     private boolean addMember(String id) {
         return state.register(new ClientInfo(id, "127.0.0.1", 9000), dummyWriter());
     }
 
-    // -------------------------------------------------------------------------
-    // Group formation
-    // -------------------------------------------------------------------------
-
+    // group formation and membership management tests
     @Test
     @Order(1)
     @DisplayName("First member to join becomes coordinator")
@@ -92,10 +86,7 @@ class ChatServerTest {
         assertEquals(2, state.size());
     }
 
-    // -------------------------------------------------------------------------
-    // Coordinator election (fault tolerance)
-    // -------------------------------------------------------------------------
-
+    // coordinator election (fault tolerance) tests
     @Test
     @Order(5)
     @DisplayName("New coordinator elected when coordinator leaves")
@@ -138,10 +129,7 @@ class ChatServerTest {
         assertNotEquals(first, second);
     }
 
-    // -------------------------------------------------------------------------
-    // Messaging
-    // -------------------------------------------------------------------------
-
+    // messaging tests
     @Test
     @Order(8)
     @DisplayName("Broadcast reaches all members")
@@ -209,10 +197,7 @@ class ChatServerTest {
         assertTrue(swAlice.toString().contains(Protocol.ERROR));
     }
 
-    // -------------------------------------------------------------------------
-    // Ping / Pong (fault tolerance)
-    // -------------------------------------------------------------------------
-
+    // ping/pong (fault tolerance) tests
     @Test
     @Order(13)
     @DisplayName("Unresponsive client detected after ping")
@@ -234,10 +219,7 @@ class ChatServerTest {
         assertFalse(state.getUnresponsiveClients().contains("alice"));
     }
 
-    // -------------------------------------------------------------------------
-    // Observer pattern
-    // -------------------------------------------------------------------------
-
+    // observer pattern tests
     @Test
     @Order(15)
     @DisplayName("GroupEventListener notified on member join")
@@ -269,10 +251,7 @@ class ChatServerTest {
         assertEquals("bob", newCoord[0]);
     }
 
-    // -------------------------------------------------------------------------
-    // CommandFactory
-    // -------------------------------------------------------------------------
-
+    // commandfactory tests
     @Test
     @Order(17)
     @DisplayName("CommandFactory parses BROADCAST command")
@@ -305,10 +284,7 @@ class ChatServerTest {
         assertInstanceOf(QuitCommand.class, cmd);
     }
 
-    // -------------------------------------------------------------------------
-    // MessageLogger (Singleton)
-    // -------------------------------------------------------------------------
-
+    // messagelogger (singleton) tests
     @Test
     @Order(21)
     @DisplayName("MessageLogger singleton returns same instance")

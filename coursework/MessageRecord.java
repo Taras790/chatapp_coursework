@@ -4,8 +4,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 /**
- * Immutable, timestamped record of a single message event.
- * Stored in {@link MessageLogger} for group state maintenance.
+ * immutable, timestamped record of a single message event
+ * stored in {@link MessageLogger} for group state maintenance and server console output
  */
 public class MessageRecord {
 
@@ -20,6 +20,7 @@ public class MessageRecord {
     private final String    content;
     private final Type      type;
 
+    // constructs a new message record with the current timestamp
     public MessageRecord(String senderId, String targetId, String content, Type type) {
         this.timestamp = LocalDateTime.now().format(FMT);
         this.senderId  = senderId;
@@ -28,13 +29,14 @@ public class MessageRecord {
         this.type      = type;
     }
 
+    // getters for all fields (immutable, so no setters)
     public String getTimestamp() { return timestamp; }
     public String getSenderId()  { return senderId; }
     public String getTargetId()  { return targetId; }
     public String getContent()   { return content; }
     public Type   getType()      { return type; }
 
-    /** Human-readable line used in chat display and server console. */
+    // returns a human-readable line used in chat display and server console
     public String format() {
         return "[" + timestamp + "] " + content;
     }

@@ -1,16 +1,16 @@
 package coursework;
 
 /**
- * Command interface — the root of the Command design pattern.
- * Each client action (broadcast, private message, list, quit, pong)
- * is encapsulated as a concrete implementation of this interface.
+ * command interface — the root of the command design pattern for chat commands
+ * each client action (broadcast, private message, list, quit, pong)
+ * is encapsulated as a concrete implementation of this interface
  *
- * Design pattern: Command.
+ * design pattern: Command (command interface)
  */
 public interface ChatCommand {
 
     /**
-     * Executes the command on behalf of the given client.
+     * executes the command on behalf of the given client
      *
      * @param clientId the ID of the client issuing the command
      * @param state    shared server state

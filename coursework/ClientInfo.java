@@ -3,8 +3,8 @@ package coursework;
 import java.time.Instant;
 
 /**
- * Immutable value object representing a connected group member.
- * Used for member-list responses and coordinator election.
+ * immutable value object representing a connected group member
+ * used for member-list responses and coordinator election
  */
 public class ClientInfo {
 
@@ -31,7 +31,7 @@ public class ClientInfo {
         this.coordinator = coordinator;
     }
 
-    /** Returns a new instance identical to this but with coordinator flag changed. */
+    //** returns a new instance identical to this but with coordinator flag changed. */
     public ClientInfo asCoordinator(boolean value) {
         return new ClientInfo(id, ipAddress, port, joinedAt, value);
     }
@@ -42,7 +42,7 @@ public class ClientInfo {
     public Instant getJoinedAt()   { return joinedAt; }
     public boolean isCoordinator() { return coordinator; }
 
-    /** Wire format used in MEMBER_LIST messages: {@code id|ip|port|isCoordinator} */
+    /** wire format used in MEMBER_LIST messages: {@code id|ip|port|isCoordinator} */
     public String toWireString() {
         return id + "|" + ipAddress + "|" + port + "|" + coordinator;
     }

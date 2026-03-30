@@ -1,10 +1,10 @@
 package coursework;
 
 /**
- * Observer interface for group membership events.
- * Implementations are notified when members join, leave, or the coordinator changes.
+ * observer interface for group membership events
+ * implementations are notified when members join, leave, or the coordinator changes
  *
- * Design pattern: Observer (subscriber side).
+ * design pattern: Observer (subscriber side)
  */
 public interface GroupEventListener {
 

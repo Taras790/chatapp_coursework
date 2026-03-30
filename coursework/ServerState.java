@@ -10,31 +10,31 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 /**
- * Singleton holding all server-side shared state: connected members, writers,
- * coordinator pointer, and ping-acknowledgement flags.
+ * singleton holding all server-side shared state: connected members, writers,
+ * coordinator pointer, and ping-acknowledgement flags
  *
- * Also acts as the Observable (subject) in the Observer pattern,
- * notifying registered {@link GroupEventListener}s of membership changes.
+ * also acts as the Observable (subject) in the Observer pattern,
+ * notifying registered {@link GroupEventListener}s of membership changes and coordinator elections
  *
- * Design patterns: Singleton, Observer (subject).
+ * design patterns: Singleton, Observer (subject) 
  */
 public class ServerState {
 
     private static volatile ServerState instance;
 
-    /** Maps clientId -> ClientInfo */
+    // maps clientId -> clientInfo
     private final ConcurrentHashMap<String, ClientInfo>  clients  = new ConcurrentHashMap<>();
-    /** Maps clientId -> PrintWriter for the client's socket output stream */
+    // maps clientId -> printWriter for the client's socket output stream
     private final ConcurrentHashMap<String, PrintWriter> writers  = new ConcurrentHashMap<>();
-    /** Tracks whether each client has responded to the last PING */
+    // tracks whether each client has responded to the last PING
     private final ConcurrentHashMap<String, Boolean>     pongAcks = new ConcurrentHashMap<>();
-
+    // ID of the current coordinator, or null if no members are present
     private volatile String coordinatorId = null;
-
+    // registered listeners to be notified of group events
     private final CopyOnWriteArrayList<GroupEventListener> listeners = new CopyOnWriteArrayList<>();
-
+    // private constructor to enforce singleton pattern
     private ServerState() {}
-
+    // double-checked locking for thread-safe lazy initialisation
     public static ServerState getInstance() {
         if (instance == null) {
             synchronized (ServerState.class) {
@@ -46,13 +46,11 @@ public class ServerState {
         return instance;
     }
 
-    // -------------------------------------------------------------------------
-    // Registration
-    // -------------------------------------------------------------------------
+    // registration and deregistration of clients, with automatic coordinator election and listener notifications
 
     /**
-     * Registers a new client. If the ID is already taken, returns false.
-     * The first client to register automatically becomes coordinator.
+     * registers a new client. If the ID is already taken, returns false and does not register
+     * the first client to register automatically becomes coordinator and is notified as such in the returned ClientInfo. Notifies listeners of the new member and coordinator status if applicable
      */
     public synchronized boolean register(ClientInfo info, PrintWriter writer) {
         if (clients.containsKey(info.getId())) {
@@ -73,8 +71,8 @@ public class ServerState {
     }
 
     /**
-     * Removes a client. If the removed client was the coordinator,
-     * automatically elects a new one and notifies all listeners.
+     * removes a client. if the removed client was the coordinator,
+     * automatically elects a new one and notifies all listeners
      */
     public synchronized void deregister(String id) {
         ClientInfo removed = clients.remove(id);
@@ -90,40 +88,34 @@ public class ServerState {
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Coordinator election
-    // -------------------------------------------------------------------------
-
+    // coordinator election algorithm: elect the member who joined earliest (most senior)
     private void electNewCoordinator() {
         if (clients.isEmpty()) {
             coordinatorId = null;
             return;
         }
-        // Elect the member who joined earliest (most senior)
+        // elect the member who joined earliest (most senior)
         ClientInfo next = clients.values().stream()
             .min(Comparator.comparing(ClientInfo::getJoinedAt))
             .orElse(null);
 
         if (next != null) {
             coordinatorId = next.getId();
-            // Update stored ClientInfo to reflect new coordinator flag
+            // update stored ClientInfo to reflect new coordinator flag
             clients.put(next.getId(), next.asCoordinator(true));
             notifyCoordinatorChanged(coordinatorId);
         }
     }
-
+    // helper method to check if a given client ID is the current coordinator
     public boolean isCoordinator(String id) {
         return id.equals(coordinatorId);
     }
-
+    // getter for coordinator ID, used in tests and by listeners
     public String getCoordinatorId() {
         return coordinatorId;
     }
 
-    // -------------------------------------------------------------------------
-    // Messaging helpers
-    // -------------------------------------------------------------------------
-
+    // messaging helpers to send messages to clients based on the current state
     public void broadcast(String message) {
         writers.values().forEach(w -> w.println(message));
     }
@@ -135,7 +127,7 @@ public class ServerState {
             .filter(w -> w != null)
             .forEach(w -> w.println(message));
     }
-
+    // sends a message to a specific client, returning true if successful or false if the target client does not exist
     public boolean sendTo(String targetId, String message) {
         PrintWriter w = writers.get(targetId);
         if (w != null) {
@@ -145,10 +137,7 @@ public class ServerState {
         return false;
     }
 
-    // -------------------------------------------------------------------------
-    // Ping / Pong tracking
-    // -------------------------------------------------------------------------
-
+    // ping/pong tracking
     public synchronized void markPingSent() {
         pongAcks.replaceAll((id, v) -> false);
     }
@@ -157,7 +146,7 @@ public class ServerState {
         pongAcks.put(id, true);
     }
 
-    /** Returns IDs of clients that did not respond to the last ping. */
+    /** returns IDs of clients that did not respond to the last ping */
     public List<String> getUnresponsiveClients() {
         return pongAcks.entrySet().stream()
             .filter(e -> !e.getValue())
@@ -165,61 +154,61 @@ public class ServerState {
             .collect(Collectors.toList());
     }
 
-    // -------------------------------------------------------------------------
-    // Queries
-    // -------------------------------------------------------------------------
-
+    // getter methods for client info and member lists, used by commands and listeners
     public ClientInfo getClient(String id) {
         return clients.get(id);
     }
 
+    // checks if a client with the given ID is currently registered
     public boolean hasClient(String id) {
         return clients.containsKey(id);
     }
 
+    // returns the number of currently connected clients
     public int size() {
         return clients.size();
     }
-
+    
+    // returns an unmodifiable list of all current members, sorted by join time (oldest first)
     public List<ClientInfo> getMemberList() {
         return Collections.unmodifiableList(new ArrayList<>(clients.values()));
     }
 
+    // returns a comma-separated string of all current members in the format "id:displayName[:coordinator]", used in the LIST command response
     public String getMemberListWire() {
         return clients.values().stream()
             .map(ClientInfo::toWireString)
             .collect(Collectors.joining(","));
     }
 
-    // -------------------------------------------------------------------------
-    // Observer pattern – listener management
-    // -------------------------------------------------------------------------
-
+    // observer pattern – listener management and notification methods
     public void addListener(GroupEventListener l) {
         listeners.add(l);
     }
 
+    // removes a listener so it will no longer receive notifications of group events
     public void removeListener(GroupEventListener l) {
         listeners.remove(l);
     }
 
+    // notification methods to inform listeners of membership changes and coordinator elections
     private void notifyJoined(ClientInfo member) {
         listeners.forEach(l -> l.onMemberJoined(member));
     }
 
+    // notifies listeners that a member has left, providing the ID of the departed member
     private void notifyLeft(String id) {
         listeners.forEach(l -> l.onMemberLeft(id));
     }
 
+    // notifies listeners that the coordinator has changed, providing the ID of the new coordinator
     private void notifyCoordinatorChanged(String newId) {
         listeners.forEach(l -> l.onCoordinatorChanged(newId));
     }
 
-    // -------------------------------------------------------------------------
-    // Test support
-    // -------------------------------------------------------------------------
+    // test support method to clear all state, used in unit tests to ensure isolation between test cases
 
-    /** Resets all state. For use in unit tests only. */
+    /** resets all state. for use in unit tests only */
     public synchronized void reset() {
         clients.clear();
         writers.clear();

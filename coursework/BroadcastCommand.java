@@ -1,9 +1,6 @@
 package coursework;
 
-/**
- * Broadcasts a chat message to every connected member.
- * Design pattern: Command (concrete command).
- */
+/** command to broadcast message to all connected clients */
 public class BroadcastCommand implements ChatCommand {
 
     private final String text;
@@ -11,7 +8,7 @@ public class BroadcastCommand implements ChatCommand {
     public BroadcastCommand(String text) {
         this.text = text;
     }
-
+    /** executes the broadcast command */
     @Override
     public void execute(String clientId, ServerState state, MessageLogger logger) {
         MessageRecord record = new MessageRecord(

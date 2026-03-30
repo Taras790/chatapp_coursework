@@ -1,5 +1,6 @@
 package coursework;
 
+/** swing based chat client for connecting to the chat server */
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.FlowLayout;
@@ -19,15 +20,15 @@ import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
 /**
- * Swing-based chat client supporting:
- * - Unique client ID entry at startup
- * - Optional server IP and port as command-line arguments
- * - Coordinator status display
- * - Broadcast messaging (plain text or BROADCAST prefix)
- * - Private messaging (@targetId message)
- * - Member list request (/list)
- * - Periodic PING/PONG handling
- * - Quit button for graceful disconnect
+ *  swing based chat client that supports: 
+ * - unique user client ID entry at startup
+ * - optional server IP and port as command-line arguments
+ * - coordinator status display
+ * - broadcast messaging
+ * - private messaging via (@targetId message)
+ * - member list request via (/list)
+ * - periodic PING/PONG handling
+ * - quit button for disconnect
  */
 public class ChatClient {
 
@@ -38,7 +39,7 @@ public class ChatClient {
     private PrintWriter out;
     private Scanner     in;
 
-    // --- GUI ---
+    // --- graphical user interface setup ---
     private final JFrame    frame        = new JFrame("Chat Client");
     private final JTextArea messageArea  = new JTextArea(18, 55);
     private final JTextField inputField  = new JTextField(40);
@@ -53,26 +54,23 @@ public class ChatClient {
         buildGui();
     }
 
-    // -------------------------------------------------------------------------
-    // GUI construction
-    // -------------------------------------------------------------------------
-
+    // graphical user interface (GUI) construction and event handling
     private void buildGui() {
         messageArea.setEditable(false);
         messageArea.setLineWrap(true);
         messageArea.setWrapStyleWord(true);
         inputField.setEditable(false);
 
-        // Status bar (top)
+        // status bar at the (top)
         statusLabel.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
         statusLabel.setForeground(Color.DARK_GRAY);
 
-        // Button panel
+        // button panel released to the right of the input field
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 4, 0));
         buttonPanel.add(listButton);
         buttonPanel.add(quitButton);
 
-        // Bottom panel: input + buttons
+        // bottom panel that defines input + buttons
         JPanel bottomPanel = new JPanel(new BorderLayout(4, 0));
         bottomPanel.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
         bottomPanel.add(inputField,   BorderLayout.CENTER);
@@ -85,19 +83,19 @@ public class ChatClient {
         frame.pack();
         frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 
-        // Send on Enter or Send button
+        // enter or send button functionality
         inputField.addActionListener(e -> sendMessage());
         sendButton.addActionListener(e -> sendMessage());
 
-        // List members button
+        // list members button functionality
         listButton.addActionListener(e -> {
             if (out != null) out.println(Protocol.LIST);
         });
 
-        // Quit button — graceful disconnect
+        // quit button or disconnect from server functionality
         quitButton.addActionListener(e -> quit());
 
-        // Window close = same as Quit
+        // window close as same as quit functionality
         frame.addWindowListener(new java.awt.event.WindowAdapter() {
             @Override
             public void windowClosing(java.awt.event.WindowEvent e) {
@@ -106,12 +104,13 @@ public class ChatClient {
         });
     }
 
+    // send message to server based on input field content and clear it
     private void sendMessage() {
         String text = inputField.getText().trim();
         if (text.isEmpty() || out == null) return;
 
         if (text.startsWith("@")) {
-            // Private message: @targetId some message text
+            // private message (direct) @targetId message text with conditions
             int spaceIdx = text.indexOf(' ');
             if (spaceIdx > 1) {
                 String targetId = text.substring(1, spaceIdx);
@@ -134,10 +133,8 @@ public class ChatClient {
         System.exit(0);
     }
 
-    // -------------------------------------------------------------------------
-    // ID / connection dialog
-    // -------------------------------------------------------------------------
 
+    // id entry dialog and validation
     private String askId() {
         String id = null;
         while (id == null || id.trim().isEmpty()) {
@@ -147,14 +144,12 @@ public class ChatClient {
                 "Choose an ID",
                 JOptionPane.PLAIN_MESSAGE
             );
-            if (id == null) System.exit(0); // user cancelled
+            if (id == null) System.exit(0); // user cancelled the dialog
         }
         return id.trim();
     }
 
-    // -------------------------------------------------------------------------
-    // Network read loop
-    // -------------------------------------------------------------------------
+    // network read loop and server message handling
 
     private void run() throws IOException {
         try (Socket socket = new Socket(serverAddress, serverPort)) {
@@ -173,16 +168,19 @@ public class ChatClient {
         }
     }
 
+    // handle messages from the server based on the defined protocol
     private void handleServerMessage(String line) {
         if (line.equals(Protocol.SUBMITNAME)) {
             out.println(askId());
 
+        // server response to name submission: either NAME_TAKEN or NAMEACCEPTED id
         } else if (line.equals(Protocol.NAME_TAKEN)) {
             SwingUtilities.invokeLater(() ->
                 JOptionPane.showMessageDialog(frame,
                     "That ID is already taken. Please choose another.",
                     "ID Taken", JOptionPane.WARNING_MESSAGE));
 
+        // successful name acceptance with assigned client ID
         } else if (line.startsWith(Protocol.NAMEACCEPTED + " ")) {
             clientId = line.substring(Protocol.NAMEACCEPTED.length() + 1).trim();
             SwingUtilities.invokeLater(() -> {
@@ -192,12 +190,14 @@ public class ChatClient {
                 appendLine("Tip: use @targetId msg for private messages, /list to see members");
             });
 
+        // coordinator status messages from server
         } else if (line.equals(Protocol.COORDINATOR_YOU)) {
             SwingUtilities.invokeLater(() -> {
                 setStatus(clientId + "  [COORDINATOR]", Color.decode("#006400"));
                 appendLine("*** You are the group coordinator ***");
             });
 
+        // coordinator announcement from server with format: COORDINATOR_IS coordId
         } else if (line.startsWith(Protocol.COORDINATOR_IS + " ")) {
             String coord = line.substring(Protocol.COORDINATOR_IS.length() + 1).trim();
             SwingUtilities.invokeLater(() -> {
@@ -205,6 +205,7 @@ public class ChatClient {
                 appendLine("*** Coordinator: " + coord + " ***");
             });
 
+        // coordinator change notification from server with format: COORDINATOR_CHANGED newCoordId
         } else if (line.startsWith(Protocol.COORDINATOR_CHANGED + " ")) {
             String newCoord = line.substring(Protocol.COORDINATOR_CHANGED.length() + 1).trim();
             SwingUtilities.invokeLater(() -> {
@@ -217,42 +218,55 @@ public class ChatClient {
                 }
             });
 
+        // PING/PONG handling for connection health check
         } else if (line.equals(Protocol.PING)) {
             out.println(Protocol.PONG); // reply immediately
 
+        // other message types with content
         } else if (line.startsWith(Protocol.MEMBER_LIST + " ")) {
             String data = line.substring(Protocol.MEMBER_LIST.length() + 1);
             SwingUtilities.invokeLater(() -> showMemberList(data));
 
+        // broadcast message from server (from another client or self) with format: MESSAGE senderId: text
         } else if (line.startsWith(Protocol.MESSAGE + " ")) {
             String text = line.substring(Protocol.MESSAGE.length() + 1);
             SwingUtilities.invokeLater(() -> appendLine(text));
 
+
+        // private message received from server with format: PRIVATE senderId: text
         } else if (line.startsWith(Protocol.PRIVATE + " ")) {
             String text = line.substring(Protocol.PRIVATE.length() + 1);
             SwingUtilities.invokeLater(() -> appendLine("[PRIVATE] " + text));
 
+        // private message sent confirmation from server with format: PRIVATE_SENT targetId: text
         } else if (line.startsWith(Protocol.PRIVATE_SENT + " ")) {
             String text = line.substring(Protocol.PRIVATE_SENT.length() + 1);
             SwingUtilities.invokeLater(() -> appendLine("[PRIVATE SENT] " + text));
 
+
+        // member joined or left notifications with format: MEMBER_JOINED info or MEMBER_LEFT who
         } else if (line.startsWith(Protocol.MEMBER_JOINED + " ")) {
             String info = line.substring(Protocol.MEMBER_JOINED.length() + 1);
             SwingUtilities.invokeLater(() -> appendLine("--- " + info + " joined ---"));
 
+
+        // member left notification with format: MEMBER_LEFT who
         } else if (line.startsWith(Protocol.MEMBER_LEFT + " ")) {
             String who = line.substring(Protocol.MEMBER_LEFT.length() + 1);
             SwingUtilities.invokeLater(() -> appendLine("--- " + who + " left ---"));
 
+
+        // error message from server with format: ERROR message
         } else if (line.startsWith(Protocol.ERROR + " ")) {
             String err = line.substring(Protocol.ERROR.length() + 1);
             SwingUtilities.invokeLater(() -> appendLine("[ERROR] " + err));
         }
     }
 
+    // display the member list in the message area based on the server's MEMBER_LIST response
     private void showMemberList(String data) {
         appendLine("--- Member List ---");
-        // Format: id|ip|port|isCoord,...  COORDINATOR:id
+        // format: id|ip|port|isCoord,...  COORDINATOR:id etc (coordinator part is optional if no coordinator)
         String[] parts = data.split(" COORDINATOR:");
         String coordinator = parts.length == 2 ? parts[1] : "?";
         appendLine("Coordinator: " + coordinator);
@@ -267,20 +281,19 @@ public class ChatClient {
         appendLine("-------------------");
     }
 
+    // helper method to append a line of text to the message area and scroll to the bottom
     private void appendLine(String text) {
         messageArea.append(text + "\n");
         messageArea.setCaretPosition(messageArea.getDocument().getLength());
     }
 
+    // helper method to set the status label text and color
     private void setStatus(String text, Color color) {
         statusLabel.setText("  " + text);
         statusLabel.setForeground(color);
     }
 
-    // -------------------------------------------------------------------------
-    // Entry point
-    // -------------------------------------------------------------------------
-
+    // entry point with optional command-line arguments for server host and port
     public static void main(String[] args) throws Exception {
         String host = "localhost";
         int    port = Protocol.DEFAULT_PORT;
@@ -294,6 +307,7 @@ public class ChatClient {
         final String finalHost = host;
         final int    finalPort = port;
 
+        // start the client GUI and network thread
         SwingUtilities.invokeLater(() -> {
             ChatClient client = new ChatClient(finalHost, finalPort);
             client.frame.setVisible(true);
