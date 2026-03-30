@@ -54,6 +54,8 @@ Chat server running on port 50000 ...
 
 Keep this terminal running.
 
+Alternatively, you can start the server using the **Run** button in your IDE (e.g., VS Code) by running `ChatServer.java` directly.
+
 ### 3) Start a Client
 
 In a new terminal:
@@ -63,6 +65,8 @@ java --module-path out -m coursework/coursework.ChatClient localhost
 ```
 
 Enter a unique ID when prompted.
+
+Alternatively, you can start the client using the **Run** button in your IDE (e.g., VS Code) by running `ChatClient.java`. Run it multiple times to simulate multiple users.
 
 ### 4) Start More Clients
 
